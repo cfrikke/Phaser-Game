@@ -10,12 +10,17 @@ class WorldOneLevelOne extends Phaser.Scene {
     cursors;
     platforms;
     bombs;
+    pvx = 0;
+    pvy;
+    left;
+    right;
+    speedX = 2.5;
     sky;
     startGame;
     stars;
     player;
-    jp = 400;
-    g = 500;
+    jp = 575;
+    g = 1000;
     create ()
     {
         //alert("Game Started");
@@ -31,8 +36,14 @@ class WorldOneLevelOne extends Phaser.Scene {
 
         //  Here we create the ground.
         //  Scale it to fit the width of the game (the original sprite is 400x32 in size)
-            this.platforms.create(0, 500, 'ground').setScale(1000, 1).refreshBody();
-            //this.startGame.create((this.iw/2)+500, 50, 'zone');
+        this.platforms.create(0, 500, 'ground').setScale(1000, 1).refreshBody();
+        this.platforms.create(750, 350, 'block').setScale(1, 1).refreshBody();
+        this.platforms.create(850, 400, 'block').setScale(1, 1).refreshBody();
+        this.platforms.create(950, 300, 'block').setScale(1, 1).refreshBody();
+        this.platforms.create(850, 300, 'block').setScale(1, 1).refreshBody();
+        
+
+        //this.startGame.create((this.iw/2)+500, 50, 'zone');
 
         //  Now let's create some ledges
         //this.platforms.create((this.iw/2), 400, 'ground').setScale(0.5, 1).refreshBody();
@@ -42,7 +53,7 @@ class WorldOneLevelOne extends Phaser.Scene {
 
 
         // The player and its settings
-        this.player = this.physics.add.sprite(100, 450, 'dude');
+        this.player = this.physics.add.sprite(100, 450, 'dude').setCircle(15, -0);
 
         //  Player physics properties. Give the little guy a slight bounce.
         this.player.setBounce(0.15);
@@ -142,20 +153,52 @@ class WorldOneLevelOne extends Phaser.Scene {
 
         if (this.cursors.left.isDown)
         {
-            this.player.setVelocityX(-320);
-            this.player.anims.play('left', true);
-        }
+            this.left = true; 
+            this.right = false;
+            if(this.pvx == 0){
+                this.pvx -= 1;
+            }
+            if(this.pvx > -320){
+            this.pvx -= this.speedX;
+            console.log(this.pvx);
+            }
+           // this.player.setVelocityX(320);
+           this.player.setVelocityX(this.pvx); 
+           this.player.anims.play('left', true);
+        }else if(!this.cursors.left.isDown && !this.cursors.right.isDown && this.left){
+            this.player.setVelocityX(this.pvx);
+            if(this.pvx < -1*this.speedX){
+                this.pvx += this.speedX;
+            }
+            this.player.anims.stop('left');
+            this.player.anims.play('left');
+            this.player.anims.stop('left');
+    }
         else if (this.cursors.right.isDown)
         {
-            this.player.setVelocityX(320);
-            this.player.anims.play('right', true);
+            this.left = false;
+            this.right = true;
+            if(this.pvx == 0){
+                this.pvx += 1;
+            }
+            if(this.pvx < 320){
+            this.pvx += this.speedX;
+            console.log(this.pvx);
+            }
+           // this.player.setVelocityX(320);
+           this.player.setVelocityX(this.pvx); 
+           this.player.anims.play('right', true);
+        }else if(!(this.cursors.left.isDown) && !(this.cursors.right.isDown) && this.right){
+            if(this.right){
+            this.player.setVelocityX(this.pvx);
+            if(this.pvx > this.speedX){
+                this.pvx -= this.speedX;
+            }
+            this.player.anims.stop('right');
+            this.player.anims.play('right');
+            this.player.anims.stop('right');
         }
-        else
-        {
-            this.player.setVelocityX(0);
-            this.player.anims.play('turn');
-        }
-
+    }
         if (this.cursors.up.isDown)
         {
             if(this.player.body.touching.down){
