@@ -18,7 +18,8 @@ class WorldOneLevelOne extends Phaser.Scene {
     sky;
     startGame;
     stars;
-    player;
+    body;
+    head;
     jp = 575;
     g = 1000;
     create ()
@@ -53,39 +54,64 @@ class WorldOneLevelOne extends Phaser.Scene {
 
 
         // The player and its settings
-        this.player = this.physics.add.sprite(100, 450, 'dude').setCircle(15, -0);
+        //this.player = this.head + this.body;
+        this.head = this.physics.add.staticGroup();
+        this.head = this.head.create(100, 450, 'head').setCircle(1);
+        this.body = this.physics.add.sprite(100, 450, 'body');
 
         //  Player physics properties. Give the little guy a slight bounce.
-        this.player.setBounce(0.15);
-        this.player.setCollideWorldBounds(false);
+        this.body.setBounce(0.15);
+        //this.player.setCollideWorldBounds(false);
         
         // Start Camera Following
-        this.cameras.main.startFollow(this.player);
+        this.cameras.main.startFollow(this.body);
         //alert("Camera Followed");
 
         //  Our player animations, turning, walking left and walking right.
         this.anims.create({
-            key: 'left',
-            frames: this.anims.generateFrameNumbers('dude', { start: 0, end: 3 }),
+            key: 'BodyLeft',
+            frames: this.anims.generateFrameNumbers('body', { start: 0, end: 3 }),
             frameRate: 10,
             repeat: -1
         });
 
         this.anims.create({
-            key: 'turn',
-            frames: [ { key: 'dude', frame: 4 } ],
+            key: 'BodyTurn',
+            frames: [ { key: 'body', frame: 4 } ],
             frameRate: 20
         });
 
         this.anims.create({
-            key: 'right',
-            frames: this.anims.generateFrameNumbers('dude', { start: 5, end: 8 }),
+            key: 'BodyRight',
+            frames: this.anims.generateFrameNumbers('body', { start: 5, end: 8 }),
             frameRate: 10,
             repeat: -1
         });
 
+        // Our player animations for the head
+        this.anims.create({
+            key: 'HeadLeft',
+            frames: this.anims.generateFrameNumbers('head', { start: 0, end: 3 }),
+            frameRate: 10,
+            repeat: -1
+        });
+
+        this.anims.create({
+            key: 'HeadTurn',
+            frames: [ { key: 'head', frame: 4 } ],
+            frameRate: 20
+        });
+
+        this.anims.create({
+            key: 'HeadRight',
+            frames: this.anims.generateFrameNumbers('head', { start: 5, end: 8 }),
+            frameRate: 10,
+            repeat: -1
+        });
+
+
         //  Input Events
-        this.cameras.main.startFollow(this.player, true);
+        this.cameras.main.startFollow(this.body, true);
         this.cameras.main.setBounds(0, 0, 999999999, 0);
         this.cursors = this.input.keyboard.createCursorKeys();
 
@@ -115,18 +141,22 @@ class WorldOneLevelOne extends Phaser.Scene {
 
         //  Collide the player and the stars with the platforms
 //        this.physics.add.collider(this.stars, this.platforms);
-        this.physics.add.collider(this.player, this.platforms);
-        //this.physics.add.collider(this.player, this.startGame);
+this.physics.add.collider(this.body, this.platforms);
+this.physics.add.collider(this.head, this.platforms);
+//this.physics.add.collider(this.player, this.startGame);
         this.physics.add.collider(this.bombs, this.platforms);
 
         //  Checks to see if the player overlaps with any of the stars, if he does call the collectStar function
 //        this.physics.add.overlap(this.player, this.stars, this.collectStar, null, this);
-        this.physics.add.overlap(this.player, this.startGame, this.startGameCutscene, null, this);
-        this.physics.add.collider(this.player, this.bombs, this.hitBomb, null, this);
+        this.physics.add.overlap(this.body, this.startGame, this.startGameCutscene, null, this);
+        this.physics.add.collider(this.body, this.bombs, this.hitBomb, null, this);
     }
 
     update ()
     {
+        this.head.x = this.body.x;
+        this.head.y = this.body.y - 20;
+        this.head.refreshBody();
         //this.platforms.create(this.player.x, 500, 'ground').setScale(1).refreshBody();
         this.sky.tilePositionX += 1;
         //this.bg.tilePositionY += 1.5;
@@ -147,7 +177,7 @@ class WorldOneLevelOne extends Phaser.Scene {
         {
             this.scene.start("bootGame");
         }
-        if (this.player.y > 1080){
+        if (this.body.y > 1080){
             this.scene.start("bootGame");
         }
 
@@ -163,17 +193,21 @@ class WorldOneLevelOne extends Phaser.Scene {
             console.log(this.pvx);
             }
            // this.player.setVelocityX(320);
-           this.player.setVelocityX(this.pvx); 
-           this.player.anims.play('left', true);
+           this.body.setVelocityX(this.pvx); 
+           this.body.anims.play('BodyLeft', true);
+           this.head.anims.play('HeadLeft', true);
         }else if(!this.cursors.left.isDown && !this.cursors.right.isDown && this.left){
-            this.player.setVelocityX(this.pvx);
+            this.body.setVelocityX(this.pvx);
             if(this.pvx < -1*this.speedX){
                 this.pvx += this.speedX;
             }
-            this.player.anims.stop('left');
-            this.player.anims.play('left');
-            this.player.anims.stop('left');
-    }
+            this.body.anims.stop('BodyLeft');
+            this.body.anims.play('BodyLeft');
+            this.body.anims.stop('BodyLeft');
+            this.head.anims.stop('HeadLeft');
+            this.head.anims.play('HeadLeft');
+            this.head.anims.stop('HeadLeft');
+        }
         else if (this.cursors.right.isDown)
         {
             this.left = false;
@@ -186,35 +220,40 @@ class WorldOneLevelOne extends Phaser.Scene {
             console.log(this.pvx);
             }
            // this.player.setVelocityX(320);
-           this.player.setVelocityX(this.pvx); 
-           this.player.anims.play('right', true);
+           this.body.setVelocityX(this.pvx); 
+           this.body.anims.play('BodyRight', true);
+           this.head.anims.play('HeadRight', true);
         }else if(!(this.cursors.left.isDown) && !(this.cursors.right.isDown) && this.right){
             if(this.right){
-            this.player.setVelocityX(this.pvx);
+            this.body.setVelocityX(this.pvx);
             if(this.pvx > this.speedX){
                 this.pvx -= this.speedX;
             }
-            this.player.anims.stop('right');
-            this.player.anims.play('right');
-            this.player.anims.stop('right');
+            this.body.anims.stop('BodyRight');
+            this.body.anims.play('BodyRight');
+            this.body.anims.stop('BodyRight');
+            this.head.anims.stop('HeadRight');
+            this.head.anims.play('HeadRight');
+            this.head.anims.stop('HeadRight');
+            this.pvx = 0;
         }
     }
         if (this.cursors.up.isDown)
         {
-            if(this.player.body.touching.down){
-            this.player.setVelocityY(this.jp*-1);
+            if(this.body.body.touching.down){
+            this.body.setVelocityY(this.jp*-1);
             }
         }
     }
-    startGameCutscene(player, gameStart)
+    startGameCutscene(body, gameStart)
     {
-        playerx = this.player.x;
-        playery = this.player.y;
+        playerx = this.body.x;
+        playery = this.body.y;
         this.scene.start("GameStartCutscene");       
     }
 
 
-    collectStar (player, star)
+    collectStar (body, star)
     {
         star.disableBody(true, true);
 
